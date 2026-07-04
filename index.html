@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>서충주 365 테니스 클럽 출석부</title>
+    <!-- 홈 화면 추가 시 앱처럼 작동하도록 설정 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="365출석부">
+    <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=150&auto=format&fit=crop&q=60">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #27ae60;
+            --bg-color: #f5f6fa;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 15px;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        /* 홈화면 추가 안내 배너 */
+        .install-banner {
+            background: #fff9db;
+            border: 1px solid #fab005;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .install-btn {
+            background: #fcc419;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        h1 {
+            text-align: center;
+            font-size: 20px;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            background: #edf2f7;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .date-select {
+            padding: 6px 10px;
+            font-size: 15px;
+            border-radius: 5px;
+            border: 1px solid #cbd5e0;
+            font-weight: bold;
+        }
+        .auth-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .auth-status {
+            font-size: 12px;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        .member-list {
+            margin-bottom: 20px;
+        }
+        .member-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 10px;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .member-info .name {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .member-info .phone {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-left: 5px;
+        }
+        .member-info .role {
+            font-size: 11px;
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 5px;
+            color: #4a5568;
+        }
+        .chk-btn {
+            width: 50px;
+            padding: 8px 0;
+            border-radius: 6px;
+            border: 1px solid #cbd5e0;
+            background: #fff;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            color: #a0aec0;
+        }
+        .chk-btn.present {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+        .stats-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .stats-title {
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+        }
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .stats-table th, .stats-table td {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .stats-table th {
+            background: #edf2f7;
+        }
+        .export-btn {
+            width: 100%;
+            background: #3182ce;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 홈화면 추가 안내 가이드 -->
+    <div class="install-banner" id="installBanner">
+        <span>📱 스마트폰 홈 화면에 '출석부 앱' 추가하기</span>
+        <button class="install-btn" onclick="showGuide()">추가방법</button>
+    </div>
+
+    <h1>🎾 서충주 365 테니스 클럽 출석부</h1>
+    <div class="subtitle">운동일: 매주 화, 금, 토, 일 & 공휴일</div>
+
+    <div class="controls">
+        <div>
+            <label for="dateSelect" style="font-size:13px; color:#4a5568;">날짜 선택: </label>
+            <select id="dateSelect" class="date-select" onchange="loadAttendance()"></select>
+        </div>
+        <div>
+            <button id="authBtn" class="auth-btn" onclick="toggleAuth()">임원인증</button>
+            <span id="authStatus" class="auth-status" style="display:none;">🔓 권한획득</span>
+        </div>
+    </div>
+
+    <div class="member-list" id="memberList"></div>
+
+    <div class="stats-box">
+        <div class="stats-title">
+            <span>📊 누적 출석 통계</span>
+            <span style="font-size:12px; color:#7f8c8d; font-weight:normal;">(7/5 이후 누적)</span>
+        </div>
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>이름</th>
+                    <th>직책</th>
+                    <th>출석 일수</th>
+                    <th>출석률</th>
+                </tr>
+            </thead>
+            <tbody id="statsTableBody"></tbody>
+        </table>
+        <button class="export-btn" onclick="exportToCSV()">엑셀(CSV) 다운로드</button>
+    </div>
+</div>
+
+<script>
+    const members = [
+        { id: 1, name: "경의창", phone: "010-2800-1950", role: "고문" },
+        { id: 2, name: "김계원", phone: "010-9222-0013", role: "" },
+        { id: 3, name: "김동삼", phone: "010-2793-1113", role: "" },
+        { id: 4, name: "김성준", phone: "010-7733-3344", role: "" },
+        { id: 5, name: "김시연", phone: "010-3355-9419", role: "" },
+        { id: 6, name: "김애란", phone: "010-3337-7616", role: "" },
+        { id: 7, name: "김종완", phone: "010-8799-9623", role: "" },
+        { id: 8, name: "김종진", phone: "010-6690-1019", role: "회장" },
+        { id: 9, name: "김진우", phone: "010-3400-0829", role: "" },
+        { id: 10, name: "김혜지", phone: "010-6550-3002", role: "홍보" },
+        { id: 11, name: "박경숙", phone: "010-2753-2497", role: "" },
+        { id: 12, name: "손현우", phone: "010-4413-7541", role: "" },
+        { id: 13, name: "신명호", phone: "010-8779-0336", role: "경기이사" },
+        { id: 14, name: "안춘식", phone: "010-2075-0322", role: "" },
+        { id: 15, name: "유진숙", phone: "010-7414-5400", role: "부회장" },
+        { id: 16, name: "윤기웅", phone: "010-8001-2111", role: "" },
+        { id: 17, name: "이의중", phone: "010-8689-3335", role: "" },
+        { id: 18, name: "이진숙", phone: "010-8425-9757", role: "" },
+        { id: 19, name: "홍선희", phone: "010-9240-8505", role: "총무" },
+        { id: 20, name: "황종열", phone: "010-7289-6696", role: "" }
+    ];
+
+    const ADMIN_PASSWORD = "365"; 
+    let isAdmin = false;
+    let attendanceData = JSON.parse(localStorage.getItem('tennis_attendance')) || {};
+
+    function generateExerciseDates() {
+        const dates = [];
+        let current = new Date('2026-07-05');
+        const end = new Date();
+        end.setDate(end.getDate() + 30);
+
+        while (current <= end) {
+            const day = current.getDay();
+            if (day === 0 || day === 2 || day === 5 || day === 6) {
+                dates.push(current.toISOString().split('T')[0]);
+            }
+            current.setDate(current.getDate() + 1);
+        }
+        return dates.reverse();
+    }
+
+    window.onload = function() {
+        const dateSelect = document.getElementById('dateSelect');
+        generateExerciseDates().forEach(date => {
+            const option = document.createElement('option');
+            option.value = date;
+            option.text = formatDateLabel(date);
+            dateSelect.appendChild(option);
+        });
+        renderMembers();
+        loadAttendance();
+    }
+
+    function formatDateLabel(dateStr) {
+        const d = new Date(dateStr);
+        return `${d.getMonth()+1}/${d.getDate()}(${['일','월','화','수','목','금','토'][d.getDay()]})`;
+    }
+
+    function showGuide() {
+        alert("📱 [홈 화면 추가 방법]\n\n1. 갤럭시(삼성인터넷/크롬): 우측 하단 삼선(≡) 메뉴 또는 상단 점 3개 -> '현재 페이지 추가' -> '홈 화면'을 선택하세요.\n\n2. 아이폰(Safari): 하단 중앙 '공유 버튼(네모에 화살표)' -> '홈 화면에 추가'를 선택하세요.\n\n바탕화면에 테니스공 모양의 예쁜 앱 아이콘이 생성됩니다!");
+    }
+
+    function toggleAuth() {
+        if (!isAdmin) {
+            if (prompt("임원 비밀번호를 입력하세요:") === ADMIN_PASSWORD) {
+                isAdmin = true;
+                document.getElementById('authBtn').style.display = 'none';
+                document.getElementById('authStatus').style.display = 'inline';
+            } else { alert("비밀번호가 일치하지 않습니다."); }
+        }
+    }
+
+    function renderMembers() {
+        const listDiv = document.getElementById('memberList');
+        listDiv.innerHTML = '';
+        members.forEach(m => {
+            listDiv.innerHTML += `
+                <div class="member-item">
+                    <div class="member-info">
+                        <span class="name">${m.name}</span>
+                        <span class="phone">(${m.phone.slice(-4)})</span>
+                        ${m.role ? `<span class="role">${m.role}</span>` : ''}
+                    </div>
+                    <button id="btn-${m.id}" class="chk-btn" onclick="toggleAttendance(${m.id})">❌</button>
+                </div>`;
+        });
+    }
+
+    function loadAttendance() {
+        const selectedDate = document.getElementById('dateSelect').value;
+        const dayData = attendanceData[selectedDate] || [];
+        members.forEach(m => {
+            const btn = document.getElementById(`btn-${m.id}`);
+            btn.className = dayData.includes(m.id) ? 'chk-btn present' : 'chk-btn';
+            btn.innerText = dayData.includes(m.id) ? '⭕' : '❌';
+        });
+        calculateStats();
+    }
+
+    function toggleAttendance(memberId) {
+        if (!isAdmin) { return alert("임원인증을 먼저 진행해 주세요."); }
+        const selectedDate = document.getElementById('dateSelect').value;
+        if (!attendanceData[selectedDate]) attendanceData[selectedDate] = [];
+        const idx = attendanceData[selectedDate].indexOf(memberId);
+        if (idx > -1) attendanceData[selectedDate].splice(idx, 1);
+        else attendanceData[selectedDate].push(memberId);
+        localStorage.setItem('tennis_attendance', JSON.stringify(attendanceData));
+        loadAttendance();
+    }
+
+    function calculateStats() {
+        const tbody = document.getElementById('statsTableBody');
+        tbody.innerHTML = '';
+        const totalDays = Object.keys(attendanceData).filter(d => attendanceData[d].length > 0).length || 1;
+        members.forEach(m => {
+            let count = 0;
+            Object.keys(attendanceData).forEach(d => { if (attendanceData[d].includes(m.id)) count++; });
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${m.name}</strong></td>
+                    <td><span style="font-size:11px;">${m.role || '-'}</span></td>
+                    <td>${count}일</td>
+                    <td><span style="color:var(--accent-color); font-weight:bold;">${((count/totalDays)*100).toFixed(0)}%</span></td>
+                </tr>`;
+        });
+    }
+
+    function exportToCSV() {
+        let csv = '\uFEFF이름,직책,전화번호,출석일수,출석률\n';
+        const totalDays = Object.keys(attendanceData).filter(d => attendanceData[d].length > 0).length || 1;
+        members.forEach(m => {
+            let count = 0;
+            Object.keys(attendanceData).forEach(d => { if (attendanceData[d].includes(m.id)) count++; });
+            csv += `${m.name},${m.role || '-'},${m.phone},${count}일,${((count/totalDays)*100).toFixed(0)}%\n`;
+        });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+        link.setAttribute("download", "서충주365_출석통계.csv");
+        link.click();
+    }
+</script>
+</body>
+</html>
