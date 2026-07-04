@@ -4,14 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>서충주 365 테니스 클럽 출석부</title>
-    <!-- 홈 화면 추가 시 앱처럼 작동하도록 설정 -->
+    
+    <!-- 모바일 앱 모드 설정 -->
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="365출석부">
     
-    <!-- 아이콘: 제공해주신 호랑이/토끼 이모티콘 적용 -->
+    <!-- 아이콘 이미지 지정 -->
+    <link rel="icon" sizes="192x192" href="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2Fbtv07Z%2FbtsHeW6Fp0M%2FNK8p9b45w78kP39b4r907k%2Fimg.png">
     <link rel="apple-touch-icon" sizes="180x180" href="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2Fbtv07Z%2FbtsHeW6Fp0M%2FNK8p9b45w78kP39b4r907k%2Fimg.png">
-    
+
+    <!-- [핵심] 크롬/삼성인터넷 아이콘 강제 고정을 깨기 위한 인라인 웹앱 정의 설정 -->
+    <link rel="manifest" href="data:application/json;base64,ewogICAgIm5hbWUiOiAi7ISc7Lap7KO8IDM2NSDthYjripjripQg7Iij7ISd67aAIiwKICAgICJzaG9ydF9uYW1lIjogIjM2Ne出国67aAIiwKICAgICJzdGFydF91cmwiOiAiLiIsCiAgICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAgICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmNWY2ZmEiLAogICAgInRoZW1lX2NvbG9yIjogIiMyYzNlNTAiLAogICAgImljb25zIjogWwogICAgICAgIHsKICAgICAgICAgICAgInNyYyI6ICJodHRwczovL2ltZzEuZGF1bWNkbi5uZXQvdGh1bWIvUjEyODB4MC8/c2NvZGU9bXRpc3RvcnkyJmZuYW1lPWh0dHBzJTNBJTJGJTJGYmxvZy5rYWthb2Nkbi5uZXQlMkZkbiUyRmJ0djA3WiUyRmJ0c0hlVzZGUE1NJTJGTks4cDliNDV3NzhrUDM5YjRyOTA3ayUyRmltZy5wbmciLAogICAgICAgICAgICAic2l6ZXMiOiAiMTkyeDE5MiIsCiAgICAgICAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICAgICAgICJwdXJwb3NlIjogImFueSBtYXNrYWJsZSIKICAgICAgICB9CiAgICBdCn0=">
+
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -33,7 +39,6 @@
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        /* 홈화면 추가 안내 배너 */
         .install-banner {
             background: #fff9db;
             border: 1px solid #fab005;
@@ -183,7 +188,6 @@
 <body>
 
 <div class="container">
-    <!-- 홈화면 추가 안내 가이드 -->
     <div class="install-banner" id="installBanner">
         <span>📱 스마트폰 홈 화면에 '출석부 앱' 추가하기</span>
         <button class="install-btn" onclick="showGuide()">추가방법</button>
@@ -253,28 +257,26 @@
     let isAdmin = false;
     let attendanceData = JSON.parse(localStorage.getItem('tennis_attendance')) || {};
 
-    // 2026년 하반기 법정 공휴일 지정 (평일 중 쉬는 날)
     const holidays2026 = [
-        "2026-09-24", // 추석 연휴
-        "2026-09-25"  // 추석 연휴 (금요일이지만 공휴일 체크)
+        "2026-09-24", 
+        "2026-09-25"  
     ];
 
     function generateExerciseDates() {
         const dates = [];
-        let current = new Date('2026-07-05'); // 내일부터 시작
-        const end = new Date('2026-12-31');   // 2026년 12월 말일까지 고정
+        let current = new Date('2026-07-05'); 
+        const end = new Date('2026-12-31');   
 
         while (current <= end) {
             const day = current.getDay();
             const dateStr = current.toISOString().split('T')[0];
             
-            // 화(2), 금(5), 토(6), 일(0) 이거나 지정된 공휴일인 경우 추가
             if (day === 0 || day === 2 || day === 5 || day === 6 || holidays2026.includes(dateStr)) {
                 dates.push(dateStr);
             }
             current.setDate(current.getDate() + 1);
         }
-        return dates.reverse(); // 최신 날짜가 맨 위로 오게 정렬
+        return dates.reverse(); 
     }
 
     window.onload = function() {
@@ -294,15 +296,19 @@
         const dayNames = ['일','월','화','수','목','금','토'];
         let label = `${d.getMonth()+1}/${d.getDate()}(${dayNames[d.getDay()]})`;
         
-        // 평일인데 공휴일 목록에 있으면 표시 달아주기
         if (holidays2026.includes(dateStr) && d.getDay() !== 0 && d.getDay() !== 2 && d.getDay() !== 5 && d.getDay() !== 6) {
             label += " 🎉공휴일";
         }
         return label;
     }
 
+    // 서비스 워커 가짜 등록으로 설치 버튼 강제 활성화 트리거
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmaXRjaCcsIGZ1bmN0aW9uKGV2ZW50KSB7fSk7');
+    }
+
     function showGuide() {
-        alert("📱 [홈 화면 추가 방법]\n\n1. 갤럭시(삼성인터넷): 우측 하단 삼선(≡) 메뉴 -> '현재 페이지 추가' -> '홈 화면'을 선택하세요.\n\n2. 아이폰(Safari): 하단 중앙 '공유 버튼(네모에 화살표)' -> '홈 화면에 추가'를 선택하세요.\n\n바탕화면에 너무 귀여운 호랑이&토끼 앱 아이콘이 생성됩니다!");
+        alert("📱 [홈 화면 추가 방법]\n\n1. 갤럭시(삼성인터넷): 우측 하단 삼선(≡) 메뉴 -> '현재 페이지 추가' -> '홈 화면'을 선택하세요.\n\n바탕화면에 귀여운 호랑이&토끼 앱 아이콘이 완벽하게 생성됩니다!");
     }
 
     function toggleAuth() {
