@@ -183,6 +183,77 @@
             margin-top: 10px;
             cursor: pointer;
         }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-box {
+            background: white;
+            border-radius: 16px;
+            padding: 28px 24px;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+            text-align: center;
+        }
+        .modal-box .modal-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .modal-box h3 {
+            margin: 0 0 4px;
+            color: var(--primary-color);
+            font-size: 17px;
+        }
+        .modal-desc {
+            margin: 0 0 18px;
+            color: #7f8c8d;
+            font-size: 13px;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #cbd5e0;
+            border-radius: 10px;
+            font-size: 17px;
+            margin-bottom: 18px;
+            box-sizing: border-box;
+            text-align: center;
+            letter-spacing: 4px;
+            transition: border-color 0.15s;
+        }
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .modal-btn.cancel {
+            background: #edf2f7;
+            color: #4a5568;
+        }
+        .modal-btn.confirm {
+            background: var(--accent-color);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -226,6 +297,19 @@
             <tbody id="statsTableBody"></tbody>
         </table>
         <button class="export-btn" onclick="exportToCSV()">엑셀(CSV) 다운로드</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="authModal" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-icon">🔒</div>
+        <h3>임원 인증</h3>
+        <p class="modal-desc">비밀번호를 입력해주세요</p>
+        <input type="password" id="authPasswordInput" class="modal-input" placeholder="••••" inputmode="numeric" onkeydown="if(event.key==='Enter') submitAuthModal()">
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeAuthModal()">취소</button>
+            <button class="modal-btn confirm" onclick="submitAuthModal()">확인</button>
+        </div>
     </div>
 </div>
 
@@ -340,10 +424,20 @@
         alert("📱 [홈 화면 추가 방법]\n\n1. 갤럭시(삼성인터넷): 우측 하단 삼선(≡) 메뉴 -> '현재 페이지 추가' -> '홈 화면'을 선택하세요.\n\n바탕화면에 귀여운 호랑이&토끼 앱 아이콘이 완벽하게 생성됩니다!");
     }
 
-    async function toggleAuth() {
+    function toggleAuth() {
         if (isAdmin) return;
-        const pw = prompt("임원 비밀번호를 입력하세요:");
-        if (pw === null) return;
+        document.getElementById('authPasswordInput').value = '';
+        document.getElementById('authModal').style.display = 'flex';
+        setTimeout(() => document.getElementById('authPasswordInput').focus(), 50);
+    }
+
+    function closeAuthModal() {
+        document.getElementById('authModal').style.display = 'none';
+    }
+
+    async function submitAuthModal() {
+        const pw = document.getElementById('authPasswordInput').value;
+        if (!pw) return;
         const res = await fetch(`${SCRIPT_URL}?action=checkPassword&password=${encodeURIComponent(pw)}`);
         const data = await res.json();
         if (data.ok) {
@@ -351,26 +445,47 @@
             adminPassword = pw;
             document.getElementById('authBtn').style.display = 'none';
             document.getElementById('authStatus').style.display = 'inline';
+            closeAuthModal();
         } else {
             alert("비밀번호가 일치하지 않습니다.");
         }
     }
 
+    function setButtonState(btn, present) {
+        btn.className = present ? 'chk-btn present' : 'chk-btn';
+        btn.innerText = present ? '⭕' : '❌';
+    }
+
     async function toggleAttendance(memberId) {
         if (!isAdmin) { return alert("임원인증을 먼저 진행해 주세요."); }
         const selectedDate = document.getElementById('dateSelect').value;
-        const res = await fetch(`${SCRIPT_URL}?action=toggleAttendance&date=${selectedDate}&memberId=${memberId}&password=${encodeURIComponent(adminPassword)}`);
-        const data = await res.json();
-        if (data.result === 'unauthorized') {
-            alert('인증이 만료됐어요. 임원인증을 다시 진행해 주세요.');
-            isAdmin = false;
-            adminPassword = '';
-            document.getElementById('authBtn').style.display = 'inline';
-            document.getElementById('authStatus').style.display = 'none';
-            return;
+        const btn = document.getElementById(`btn-${memberId}`);
+        const wasPresent = btn.classList.contains('present');
+
+        // 낙관적 업데이트: 서버 응답 기다리지 않고 즉시 화면 반영
+        setButtonState(btn, !wasPresent);
+
+        try {
+            const res = await fetch(`${SCRIPT_URL}?action=toggleAttendance&date=${selectedDate}&memberId=${memberId}&password=${encodeURIComponent(adminPassword)}`);
+            const data = await res.json();
+
+            if (data.result === 'unauthorized') {
+                setButtonState(btn, wasPresent);
+                alert('인증이 만료됐어요. 임원인증을 다시 진행해 주세요.');
+                isAdmin = false;
+                adminPassword = '';
+                document.getElementById('authBtn').style.display = 'inline';
+                document.getElementById('authStatus').style.display = 'none';
+                return;
+            }
+
+            // 서버 확정 결과로 동기화
+            setButtonState(btn, data.result === 'added');
+            loadStats(); // 통계는 백그라운드로 갱신 (기다리지 않음)
+        } catch (err) {
+            setButtonState(btn, wasPresent); // 실패 시 원래대로 되돌리기
+            alert('네트워크 오류가 발생했어요. 다시 시도해주세요.');
         }
-        await loadAttendance();
-        await loadStats();
     }
 
     async function exportToCSV() {
