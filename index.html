@@ -253,20 +253,28 @@
     let isAdmin = false;
     let attendanceData = JSON.parse(localStorage.getItem('tennis_attendance')) || {};
 
+    // 2026년 하반기 법정 공휴일 지정 (평일 중 쉬는 날)
+    const holidays2026 = [
+        "2026-09-24", // 추석 연휴
+        "2026-09-25"  // 추석 연휴 (금요일이지만 공휴일 체크)
+    ];
+
     function generateExerciseDates() {
         const dates = [];
-        let current = new Date('2026-07-05');
-        const end = new Date();
-        end.setDate(end.getDate() + 30);
+        let current = new Date('2026-07-05'); // 내일부터 시작
+        const end = new Date('2026-12-31');   // 2026년 12월 말일까지 고정
 
         while (current <= end) {
             const day = current.getDay();
-            if (day === 0 || day === 2 || day === 5 || day === 6) {
-                dates.push(current.toISOString().split('T')[0]);
+            const dateStr = current.toISOString().split('T')[0];
+            
+            // 화(2), 금(5), 토(6), 일(0) 이거나 지정된 공휴일인 경우 추가
+            if (day === 0 || day === 2 || day === 5 || day === 6 || holidays2026.includes(dateStr)) {
+                dates.push(dateStr);
             }
             current.setDate(current.getDate() + 1);
         }
-        return dates.reverse();
+        return dates.reverse(); // 최신 날짜가 맨 위로 오게 정렬
     }
 
     window.onload = function() {
@@ -283,7 +291,14 @@
 
     function formatDateLabel(dateStr) {
         const d = new Date(dateStr);
-        return `${d.getMonth()+1}/${d.getDate()}(${['일','월','화','수','목','금','토'][d.getDay()]})`;
+        const dayNames = ['일','월','화','수','목','금','토'];
+        let label = `${d.getMonth()+1}/${d.getDate()}(${dayNames[d.getDay()]})`;
+        
+        // 평일인데 공휴일 목록에 있으면 표시 달아주기
+        if (holidays2026.includes(dateStr) && d.getDay() !== 0 && d.getDay() !== 2 && d.getDay() !== 5 && d.getDay() !== 6) {
+            label += " 🎉공휴일";
+        }
+        return label;
     }
 
     function showGuide() {
@@ -300,7 +315,6 @@
         }
     }
 
-    // 명단 렌더링 시 가독성 및 정렬 최적화
     function renderMembers() {
         const listDiv = document.getElementById('memberList');
         listDiv.innerHTML = '';
