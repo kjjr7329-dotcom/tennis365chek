@@ -340,7 +340,15 @@
             }
             current.setDate(current.getDate() + 1);
         }
-        return dates.reverse();
+        return dates; // 오래된 날짜 -> 최신 날짜 순서 (시간순)
+    }
+
+    function findDefaultDate(dates) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (dates.includes(todayStr)) return todayStr; // 오늘이 운동일이면 오늘
+        const upcoming = dates.filter(d => d > todayStr);
+        if (upcoming.length > 0) return upcoming[0]; // 가장 가까운 다음 운동일
+        return dates[dates.length - 1]; // 시즌이 다 지났으면 마지막 날짜
     }
 
     function formatDateLabel(dateStr) {
@@ -356,12 +364,14 @@
 
     window.onload = async function() {
         const dateSelect = document.getElementById('dateSelect');
-        generateExerciseDates().forEach(date => {
+        const dateList = generateExerciseDates();
+        dateList.forEach(date => {
             const option = document.createElement('option');
             option.value = date;
             option.text = formatDateLabel(date);
             dateSelect.appendChild(option);
         });
+        dateSelect.value = findDefaultDate(dateList);
 
         await loadMembers();
         renderMembers();
