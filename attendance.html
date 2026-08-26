@@ -183,6 +183,85 @@
             margin-top: 10px;
             cursor: pointer;
         }
+        .detail-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 16px;
+        }
+        .detail-title {
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+        }
+        .detail-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+        .detail-select, .detail-date {
+            padding: 6px 8px;
+            font-size: 13px;
+            border-radius: 5px;
+            border: 1px solid #cbd5e0;
+            flex: 1 1 auto;
+            min-width: 90px;
+        }
+        .detail-sep {
+            align-self: center;
+            color: #a0aec0;
+            font-size: 12px;
+        }
+        .detail-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            flex: 0 0 auto;
+        }
+        .detail-summary {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .detail-table-wrap {
+            max-height: 320px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+        }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .detail-table th, .detail-table td {
+            padding: 7px 8px;
+            text-align: center;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .detail-table th {
+            background: #edf2f7;
+            position: sticky;
+            top: 0;
+        }
+        .present-badge {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        .absent-badge {
+            color: #cbd5e0;
+        }
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -298,6 +377,18 @@
         </table>
         <button class="export-btn" onclick="exportToCSV()">엑셀(CSV) 다운로드</button>
     </div>
+
+    <div class="detail-box">
+        <div class="detail-title">🔍 회원별 출석 현황 조회</div>
+        <div class="detail-controls">
+            <select id="detailMemberSelect" class="detail-select"></select>
+            <input type="date" id="detailStartDate" class="detail-date">
+            <span class="detail-sep">~</span>
+            <input type="date" id="detailEndDate" class="detail-date">
+            <button class="detail-btn" onclick="searchMemberDetail()">조회</button>
+        </div>
+        <div id="memberDetailResult"></div>
+    </div>
 </div>
 
 <div class="modal-overlay" id="authModal" style="display:none;">
@@ -377,6 +468,9 @@
         renderMembers();
         await loadAttendance();
         await loadStats();
+
+        populateDetailMemberSelect();
+        initDetailDateRange();
     }
 
     async function loadMembers() {
@@ -514,6 +608,70 @@
         link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
         link.setAttribute("download", "서충주365_출석통계.csv");
         link.click();
+    }
+
+    function populateDetailMemberSelect() {
+        const sel = document.getElementById('detailMemberSelect');
+        sel.innerHTML = '';
+        members.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.text = m.role ? `${m.name} (${m.role})` : m.name;
+            sel.appendChild(opt);
+        });
+    }
+
+    function initDetailDateRange() {
+        const seasonStart = '2026-07-05';
+        const seasonEnd = '2026-12-31';
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('detailStartDate').value = seasonStart;
+        document.getElementById('detailEndDate').value = todayStr < seasonEnd ? todayStr : seasonEnd;
+    }
+
+    async function searchMemberDetail() {
+        const memberId = document.getElementById('detailMemberSelect').value;
+        const startDate = document.getElementById('detailStartDate').value;
+        const endDate = document.getElementById('detailEndDate').value;
+        const resultDiv = document.getElementById('memberDetailResult');
+        if (!memberId || !startDate || !endDate) return;
+        if (startDate > endDate) {
+            resultDiv.innerHTML = '<p style="text-align:center; color:#e53e3e; padding:10px;">시작일이 종료일보다 늦어요.</p>';
+            return;
+        }
+
+        resultDiv.innerHTML = '<p style="text-align:center; color:#a0aec0; padding:16px;">조회 중...</p>';
+
+        const res = await fetch(`${SCRIPT_URL}?action=getMemberDetail&memberId=${memberId}&startDate=${startDate}&endDate=${endDate}`);
+        const data = await res.json();
+
+        if (data.error) {
+            resultDiv.innerHTML = '<p style="text-align:center; color:#e53e3e; padding:10px;">조회에 실패했어요.</p>';
+            return;
+        }
+
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        let html = `
+            <div class="detail-summary">
+                <strong>${data.name}</strong>${data.role ? ` <span style="font-size:11px; background:#e2e8f0; padding:2px 6px; border-radius:4px; color:#4a5568;">${data.role}</span>` : ''}
+                — 총 <strong>${data.totalDays}일</strong> 중 <span class="present-badge">${data.presentCount}일 출석</span>
+                (출석률 <span class="present-badge">${data.rate}%</span>)
+            </div>
+            <div class="detail-table-wrap">
+            <table class="detail-table">
+                <thead><tr><th>날짜</th><th>요일</th><th>출석여부</th></tr></thead>
+                <tbody>`;
+        data.records.forEach(r => {
+            const d = new Date(r.date + 'T00:00:00');
+            const dow = dayNames[d.getDay()];
+            html += `<tr>
+                <td>${r.date.slice(5).replace('-', '/')}</td>
+                <td>${dow}</td>
+                <td>${r.present ? '<span class="present-badge">⭕ 출석</span>' : '<span class="absent-badge">❌ 미출석</span>'}</td>
+            </tr>`;
+        });
+        html += `</tbody></table></div>`;
+        resultDiv.innerHTML = html;
     }
 </script>
 
