@@ -472,10 +472,16 @@
         listDiv.innerHTML = '<p style="text-align:center; color:#a0aec0; padding:16px;">불러오는 중...</p>';
 
         try {
-            await loadMembers();
+            const selectedDate = document.getElementById('dateSelect').value;
+            const [initialData, statsData] = await Promise.all([
+                fetchWithTimeout(`${SCRIPT_URL}?action=getInitialData&date=${selectedDate}`),
+                fetchWithTimeout(`${SCRIPT_URL}?action=getStats`)
+            ]);
+
+            members = initialData.members;
             renderMembers();
-            await loadAttendance();
-            await loadStats();
+            applyPresentIds(initialData.presentIds);
+            renderStatsData(statsData);
 
             populateDetailMemberSelect();
             initDetailDateRange();
@@ -502,11 +508,6 @@
         }
     }
 
-    async function loadMembers() {
-        const data = await fetchWithTimeout(`${SCRIPT_URL}?action=getMembers`);
-        members = data.members;
-    }
-
     function renderMembers() {
         const listDiv = document.getElementById('memberList');
         listDiv.innerHTML = '';
@@ -523,10 +524,8 @@
         });
     }
 
-    async function loadAttendance() {
-        const selectedDate = document.getElementById('dateSelect').value;
-        const data = await fetchWithTimeout(`${SCRIPT_URL}?action=getAttendance&date=${selectedDate}`);
-        const presentSet = new Set((data.presentIds || []).map(String));
+    function applyPresentIds(presentIds) {
+        const presentSet = new Set((presentIds || []).map(String));
         members.forEach(m => {
             const btn = document.getElementById(`btn-${m.id}`);
             const present = presentSet.has(String(m.id));
@@ -535,8 +534,13 @@
         });
     }
 
-    async function loadStats() {
-        const data = await fetchWithTimeout(`${SCRIPT_URL}?action=getStats`);
+    async function loadAttendance() {
+        const selectedDate = document.getElementById('dateSelect').value;
+        const data = await fetchWithTimeout(`${SCRIPT_URL}?action=getAttendance&date=${selectedDate}`);
+        applyPresentIds(data.presentIds);
+    }
+
+    function renderStatsData(data) {
         const tbody = document.getElementById('statsTableBody');
         tbody.innerHTML = '';
         data.stats.forEach(s => {
@@ -548,6 +552,11 @@
                     <td><span style="color:var(--accent-color); font-weight:bold;">${s.rate}%</span></td>
                 </tr>`;
         });
+    }
+
+    async function loadStats() {
+        const data = await fetchWithTimeout(`${SCRIPT_URL}?action=getStats`);
+        renderStatsData(data);
     }
 
     function showGuide() {
