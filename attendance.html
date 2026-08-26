@@ -464,18 +464,46 @@
         });
         dateSelect.value = findDefaultDate(dateList);
 
-        await loadMembers();
-        renderMembers();
-        await loadAttendance();
-        await loadStats();
+        await initPage();
+    }
 
-        populateDetailMemberSelect();
-        initDetailDateRange();
+    async function initPage() {
+        const listDiv = document.getElementById('memberList');
+        listDiv.innerHTML = '<p style="text-align:center; color:#a0aec0; padding:16px;">불러오는 중...</p>';
+
+        try {
+            await loadMembers();
+            renderMembers();
+            await loadAttendance();
+            await loadStats();
+
+            populateDetailMemberSelect();
+            initDetailDateRange();
+        } catch (err) {
+            const msg = err.name === 'AbortError'
+                ? '응답이 너무 오래 걸려요.'
+                : '데이터를 불러오지 못했어요.';
+            listDiv.innerHTML = `
+                <div style="text-align:center; padding:20px; color:#e53e3e;">
+                    <p>${msg}</p>
+                    <button onclick="initPage()" style="margin-top:10px; background:var(--accent-color); color:white; border:none; padding:8px 16px; border-radius:6px; font-weight:bold; cursor:pointer;">다시 시도</button>
+                </div>`;
+        }
+    }
+
+    async function fetchWithTimeout(url, timeoutMs = 15000) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const res = await fetch(url, { signal: controller.signal });
+            return await res.json();
+        } finally {
+            clearTimeout(timeoutId);
+        }
     }
 
     async function loadMembers() {
-        const res = await fetch(`${SCRIPT_URL}?action=getMembers`);
-        const data = await res.json();
+        const data = await fetchWithTimeout(`${SCRIPT_URL}?action=getMembers`);
         members = data.members;
     }
 
@@ -497,8 +525,7 @@
 
     async function loadAttendance() {
         const selectedDate = document.getElementById('dateSelect').value;
-        const res = await fetch(`${SCRIPT_URL}?action=getAttendance&date=${selectedDate}`);
-        const data = await res.json();
+        const data = await fetchWithTimeout(`${SCRIPT_URL}?action=getAttendance&date=${selectedDate}`);
         const presentSet = new Set((data.presentIds || []).map(String));
         members.forEach(m => {
             const btn = document.getElementById(`btn-${m.id}`);
@@ -509,8 +536,7 @@
     }
 
     async function loadStats() {
-        const res = await fetch(`${SCRIPT_URL}?action=getStats`);
-        const data = await res.json();
+        const data = await fetchWithTimeout(`${SCRIPT_URL}?action=getStats`);
         const tbody = document.getElementById('statsTableBody');
         tbody.innerHTML = '';
         data.stats.forEach(s => {
