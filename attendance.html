@@ -362,7 +362,7 @@
     <div class="stats-box">
         <div class="stats-title">
             <span>📊 누적 출석 통계</span>
-            <span style="font-size:12px; color:#7f8c8d; font-weight:normal;">(7/5 이후 누적)</span>
+            <span style="font-size:12px; color:#7f8c8d; font-weight:normal;">(회원별 가입일 이후 누적)</span>
         </div>
         <table class="stats-table">
             <thead>
@@ -619,14 +619,22 @@
             opt.text = m.role ? `${m.name} (${m.role})` : m.name;
             sel.appendChild(opt);
         });
+        sel.addEventListener('change', updateDetailStartFromMember);
+    }
+
+    function updateDetailStartFromMember() {
+        const memberId = document.getElementById('detailMemberSelect').value;
+        const m = members.find(mm => String(mm.id) === String(memberId));
+        if (m && m.joinDate) {
+            document.getElementById('detailStartDate').value = m.joinDate;
+        }
     }
 
     function initDetailDateRange() {
-        const seasonStart = '2026-07-05';
         const seasonEnd = '2026-12-31';
         const todayStr = new Date().toISOString().split('T')[0];
-        document.getElementById('detailStartDate').value = seasonStart;
         document.getElementById('detailEndDate').value = todayStr < seasonEnd ? todayStr : seasonEnd;
+        updateDetailStartFromMember(); // 첫 번째 회원의 가입일로 시작일 자동 설정
     }
 
     async function searchMemberDetail() {
