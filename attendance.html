@@ -344,7 +344,7 @@
     </div>
 
     <h1>🎾 서충주 365 테니스 클럽 출석부</h1>
-    <div class="subtitle">운동일: 매주 화, 금, 토, 일 & 공휴일</div>
+    <div class="subtitle">운동일: 매주 화, 목, 토, 일 & 공휴일 (10/27부터)</div>
 
     <div class="controls">
         <div>
@@ -417,6 +417,18 @@
         "2026-09-25"
     ];
 
+    // 2026-10-27(화)부터 평일 야간을 화,금 → 화,목으로 변경
+    const SCHEDULE_CHANGE_DATE = "2026-10-27";
+
+    function isExerciseDay(day, dateStr) {
+        if (dateStr < SCHEDULE_CHANGE_DATE) {
+            // 변경 전: 화, 금, 토, 일
+            return day === 0 || day === 2 || day === 5 || day === 6;
+        }
+        // 변경 후: 화, 목, 토, 일
+        return day === 0 || day === 2 || day === 4 || day === 6;
+    }
+
     function generateExerciseDates() {
         const dates = [];
         let current = new Date('2026-07-05');
@@ -426,7 +438,7 @@
             const day = current.getDay();
             const dateStr = current.toISOString().split('T')[0];
 
-            if (day === 0 || day === 2 || day === 5 || day === 6 || holidays2026.includes(dateStr)) {
+            if (isExerciseDay(day, dateStr) || holidays2026.includes(dateStr)) {
                 dates.push(dateStr);
             }
             current.setDate(current.getDate() + 1);
@@ -447,7 +459,7 @@
         const dayNames = ['일','월','화','수','목','금','토'];
         let label = `${d.getMonth()+1}/${d.getDate()}(${dayNames[d.getDay()]})`;
 
-        if (holidays2026.includes(dateStr) && d.getDay() !== 0 && d.getDay() !== 2 && d.getDay() !== 5 && d.getDay() !== 6) {
+        if (holidays2026.includes(dateStr) && !isExerciseDay(d.getDay(), dateStr)) {
             label += " 🎉공휴일";
         }
         return label;
